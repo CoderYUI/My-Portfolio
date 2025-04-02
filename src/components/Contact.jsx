@@ -1,76 +1,4 @@
-import { useState } from 'react';
-
 function Contact() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState('');
-  const [messageType, setMessageType] = useState('');
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitMessage('');
-    
-    try {
-      console.log('Submitting form data:', formData);
-      
-      // In development, use localhost endpoint
-      const apiUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:5000/api/contact'  
-        : '/api';  
-      
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      
-      // Get the response data
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        console.error('Failed to parse response:', parseError);
-        throw new Error('Server response was not valid JSON');
-      }
-      
-      if (response.ok) {
-        // Success case - real response from server
-        console.log('Server response:', data);
-        setSubmitMessage(data.message || 'Thank you for your message! I will get back to you soon.');
-        setMessageType('success');
-        setFormData({ name: '', email: '', subject: '', message: '' });
-      } else {
-        // Error case - server returned error
-        throw new Error(data.message || 'Server error');
-      }
-    } catch (error) {
-      console.error('Form submission error:', error);
-      setSubmitMessage(`Error: ${error.message || 'Failed to send message'}`);
-      setMessageType('error');
-    } finally {
-      setIsSubmitting(false);
-      
-      // Only auto-clear success messages, not error messages
-      if (messageType === 'success') {
-        setTimeout(() => setSubmitMessage(''), 5000);
-      }
-    }
-  };
-
   return (
     <section id="contact" className="py-20 bg-darker">
       <div className="container mx-auto px-6">
@@ -78,7 +6,7 @@ function Contact() {
           <h2 className="section-title">Get In Touch</h2>
           <div className="section-title-underline"></div>
           <p className="mt-4 text-light max-w-2xl mx-auto">
-            Have a question or want to connect? Feel free to reach out using the form below.
+            Have a question or want to connect? Feel free to reach out using the information below.
           </p>
         </div>
         
@@ -130,78 +58,17 @@ function Contact() {
             </div>
           </div>
           
-          <div>
-            <form onSubmit={handleSubmit} className="bg-gray-dark p-6 rounded-lg shadow-md border border-gray-darker">
-              {submitMessage && (
-                <div className={`mb-6 p-4 rounded-md border ${
-                  messageType === 'success' 
-                    ? 'bg-primary bg-opacity-20 text-primary border-primary' 
-                    : 'bg-red-500 bg-opacity-20 text-red-500 border-red-500'
-                }`}>
-                  {submitMessage}
-                </div>
-              )}
-              
-              <div className="mb-4">
-                <label htmlFor="name" className="block text-primary font-medium mb-2">Name</label>
-                <input 
-                  type="text" 
-                  id="name" 
-                  name="name" 
-                  value={formData.name} 
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 bg-darker border border-gray-darker text-light rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-primary font-medium mb-2">Email</label>
-                <input 
-                  type="email" 
-                  id="email" 
-                  name="email" 
-                  value={formData.email} 
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 bg-darker border border-gray-darker text-light rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label htmlFor="subject" className="block text-primary font-medium mb-2">Subject</label>
-                <input 
-                  type="text" 
-                  id="subject" 
-                  name="subject" 
-                  value={formData.subject} 
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 bg-darker border border-gray-darker text-light rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                />
-              </div>
-              
-              <div className="mb-6">
-                <label htmlFor="message" className="block text-primary font-medium mb-2">Message</label>
-                <textarea 
-                  id="message" 
-                  name="message" 
-                  value={formData.message} 
-                  onChange={handleChange}
-                  required
-                  rows="5"
-                  className="w-full px-4 py-2 bg-darker border border-gray-darker text-light rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                ></textarea>
-              </div>
-              
-              <button 
-                type="submit" 
-                disabled={isSubmitting}
-                className={`w-full bg-primary hover:bg-secondary text-dark py-3 rounded-md font-medium transition-all duration-300 shadow-glow ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
-              >
-                {isSubmitting ? 'Sending...' : 'Send Message'}
-              </button>
-            </form>
+          <div className="bg-gray-dark p-8 rounded-lg text-center">
+            <h3 className="text-xl font-semibold mb-4 text-primary">Send Me a Message</h3>
+            <p className="mb-6 text-light">
+              Contact form functionality coming soon! In the meantime, please reach out via email.
+            </p>
+            <a 
+              href="mailto:bhaskarojha2426@gmail.com"
+              className="bg-primary hover:bg-secondary text-dark py-3 px-8 rounded-lg font-medium transition-all duration-300 shadow-glow inline-block"
+            >
+              Email Me
+            </a>
           </div>
         </div>
       </div>
