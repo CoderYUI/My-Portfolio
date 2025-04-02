@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #121212;
+  color: #f0f0f0;
+}
+
+@layer components {
+  .section-title {
+    @apply text-3xl font-bold text-primary;
+  }
+  
+  .section-title-underline {
+    @apply w-20 h-1 bg-primary mx-auto mt-2;
+  }
+}
