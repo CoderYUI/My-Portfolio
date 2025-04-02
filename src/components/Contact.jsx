@@ -23,64 +23,48 @@ function Contact() {
     setSubmitMessage('');
     
     try {
-      // Capture form data in case we need to fall back
       console.log('Submitting form data:', formData);
       
-      // Try to submit to the API
+      // In development, use localhost endpoint
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:5000/api/contact'  
+        : '/api';  
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      // Get the response data
+      let data;
       try {
-        const response = await fetch('/api', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-          timeout: 8000 // 8 second timeout
-        });
-        
-        // Check if we got a valid response
-        let data;
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          data = await response.json();
-        } else {
-          // Handle non-JSON responses
-          const text = await response.text();
-          console.log('Non-JSON response:', text);
-          throw new Error('Invalid response format from server');
-        }
-        
-        if (response.ok) {
-          setSubmitMessage('Thank you for your message! I will get back to you soon.');
-          setMessageType('success');
-          setFormData({ name: '', email: '', subject: '', message: '' });
-        } else {
-          throw new Error(data.message || 'Server error');
-        }
-      } catch (fetchError) {
-        console.error('Fetch error:', fetchError);
-        
-        // Fallback for deployment environment - simulate success
-        if (window.location.hostname !== 'localhost') {
-          console.log('Using fallback response handling');
-          setSubmitMessage('Thank you for your message! I will get back to you soon.');
-          setMessageType('success');
-          setFormData({ name: '', email: '', subject: '', message: '' });
-          
-          // Log the message that would have been sent
-          console.log('Message details logged locally:', formData);
-          return;
-        }
-        
-        throw fetchError; // re-throw for local development
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        throw new Error('Server response was not valid JSON');
+      }
+      
+      if (response.ok) {
+        // Success case - real response from server
+        console.log('Server response:', data);
+        setSubmitMessage(data.message || 'Thank you for your message! I will get back to you soon.');
+        setMessageType('success');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        // Error case - server returned error
+        throw new Error(data.message || 'Server error');
       }
     } catch (error) {
       console.error('Form submission error:', error);
-      setSubmitMessage('There was an error sending your message. Please try again later or contact me directly via email.');
+      setSubmitMessage(`Error: ${error.message || 'Failed to send message'}`);
       setMessageType('error');
     } finally {
       setIsSubmitting(false);
       
-      // Clear success message after 5 seconds
+      // Only auto-clear success messages, not error messages
       if (messageType === 'success') {
         setTimeout(() => setSubmitMessage(''), 5000);
       }

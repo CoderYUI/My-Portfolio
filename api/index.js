@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb';
 
 export default async function handler(req, res) {
-  // Set appropriate CORS headers for Vercel environment
+  // Set appropriate CORS headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -28,55 +28,58 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
-    // Log the form data for troubleshooting
     console.log('Form data received:', { name, email, subject, message });
     
-    // Store in MongoDB if available, but don't fail if DB connection fails
+    // Store in MongoDB
+    let client = null;
     try {
-      // MongoDB connection string from environment variable
       const uri = process.env.MONGODB_URI;
       
-      if (uri) {
-        // Create a new contact message object
-        const contactMessage = {
-          name,
-          email,
-          subject,
-          message,
-          createdAt: new Date()
-        };
-        
-        const client = new MongoClient(uri, {
-          serverSelectionTimeoutMS: 5000, // 5 seconds timeout for server selection
-          connectTimeoutMS: 10000 // 10 seconds connection timeout
-        });
-        
-        await client.connect();
-        const database = client.db('portfolio');
-        const messagesCollection = database.collection('messages');
-        
-        await messagesCollection.insertOne(contactMessage);
-        await client.close();
-        
-        console.log('Message saved to database successfully');
+      if (!uri) {
+        throw new Error('MongoDB connection string not provided');
       }
+      
+      const contactMessage = {
+        name,
+        email,
+        subject,
+        message,
+        createdAt: new Date()
+      };
+      
+      client = new MongoClient(uri, {
+        connectTimeoutMS: 30000,
+        socketTimeoutMS: 30000,
+      });
+      
+      console.log('Connecting to MongoDB...');
+      await client.connect();
+      console.log('Connected successfully');
+      
+      const database = client.db('portfolio');
+      const messagesCollection = database.collection('messages');
+      
+      const result = await messagesCollection.insertOne(contactMessage);
+      console.log('Message saved with ID:', result.insertedId);
+      
+      return res.status(200).json({ 
+        success: true,
+        message: 'Your message has been received and stored successfully!',
+        id: result.insertedId
+      });
     } catch (dbError) {
-      // Log the error but don't fail the request
-      console.error('Database error:', dbError.message);
-      // Continue with successful response
+      console.error('Database error:', dbError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'We received your message but had trouble storing it. Please try again later.'
+      });
+    } finally {
+      if (client) {
+        await client.close().catch(console.error);
+      }
     }
-    
-    // Always return success since we want form submission to work even if DB fails
-    return res.status(200).json({ 
-      success: true,
-      message: 'Message received successfully. Thank you for contacting me!'
-    });
-    
   } catch (error) {
-    // Log the full error
     console.error('Server error:', error);
-    
-    // Return a friendly error response
     return res.status(500).json({ 
       success: false, 
       message: 'There was a problem processing your message. Please try again later.'
